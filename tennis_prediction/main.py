@@ -1,10 +1,8 @@
 import os
-import combine
-import preprocess
-import model
-
+import joblib
 
 def main():
+
   print("Welcome to the tennis prediction program!")
 
   print("This programs run on a Random Forset Classifier model using sklearn to predict the winner of a tennis match.")
@@ -46,33 +44,56 @@ def main():
   if not os.path.exists(data_file):
     if year_a == year_b:
       print("Preprocessing new data")
+      import preprocess
       preprocess.process()
     else:
       print("Merging datasets")
+      import combine
       combine.add()
       print("Preprocessing new data")
+      import preprocess
       preprocess.process()
   
   def train():
-    retrain = input("Would you like to re-train the model? (Y/N)")
+    retrain = input("Would you like to re-train the model? (Y/N) ")
     if retrain.lower() not in ["y", "n"]:
       print("Invalid input")
       quit()
     
     if retrain.lower() == "y":
+      import model
       model.train()
       print("Model updated")
     else:
       print("Continuing")
 
   train()
+  
+  model, th = joblib.load("results/final_tennis_model.pkl")
+  thresh = input(f"Do you want to adjust the threshold? Current threshold is {th:.4f} (Y/N), otherwise type 'custom' if you want to input your own threshold. ")
+  if thresh.lower() not in ["y", "n", "custom"]:
+    print("Invalid input")
+    quit()
+    
+  if thresh.lower() == "y":
+    import threshold
+    threshold.findThreshold(None)
+    acc = float(lines[2].strip())
+    print(f"New accuracy is {acc:.4f}")
+  if thresh.lower() == "n":
+    print("Continuing")
+  if thresh.lower() == "custom":
+    value = input("Threshold: ")
+    import threshold
+    threshold.findThreshold(value)
+
+
+
   player1 = input("Enter the first player's name: ")
   player2 = input("Enter the second player's name: ")
   
   import predict
-  result = predict.predict(player1, player2)
-  
-  print(f"With {acc} accuracy")
+  predict.predict(player1, player2)
 
 if __name__ == "__main__":
   main()

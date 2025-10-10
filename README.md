@@ -2,7 +2,7 @@
 
 ## Overview
 
-This project is an AI-based tennis match winner predictor using a **Random Forest** model. According to my testing it currently achieves an average of **88.2% accuracy** (V4) using the following hyperparameters:
+This project is an AI-based tennis match winner predictor using a **Random Forest** model. According to my testing it currently achieves an average of **93.7% accuracy** (V4 + Threshold) using the following hyperparameters:
 
 - **n_estimators:** 186
 - **max_depth:** 18
@@ -10,23 +10,25 @@ This project is an AI-based tennis match winner predictor using a **Random Fores
 - **min_samples_split:** 5
 - **min_samples_leaf:** 1
 - **max_features:** log2
+- **class_weight:** balanced
 
 >[!NOTE]
->According to my testing any further increase in depth above 20 and 500 estimators leads to a loss of accuracy. The trained AI model is stored and can be utilized to predict tennis match outcomes based on historical data from the ATP tennis tours.
+>An average of 93.7% accuracy is only applicable when the threshold is automatically tuned. Without threshold tuning (Threshold = 0.5 as default), the accuracy remains at the average model accuracy of 88.2%, deviations in threshold are commonly minimal, typically ranging at around ± 0.035 from the default 0.5.
 
 ## Details
 
-This is the fourth version of the model, `final_tennis_model.pkl`. Version 2, 3 and 4 of the model can be found in the `results` folder.
+Currently, there have been 4 versions of the model, only the most recent (V4) of which is accessable
 
-V2: `s_tennis_model`
+V2: `tennis_model.pkl` with **84.1% Accuracy and 725MB**
 
-V3: `small_tennis_model`
+V3: `small_tennis_model.pkl` was preferred over V2 since it was only **310MB** with minimal accuracy loss **(-0.4%, 83.7%)**
 
-V4: `final_tennis_model`
+V4: `final_tennis_model.pkl` is the current model, with **88.2% Accuracy** at approximately **214MB**
 
-The difference between V2 and V3 lies mainly in their size, with V3 being half the size with minimal accuracy loss **(~0.4%)**. 
+However, V4 and Threshold tuning boosts the predictive accuracy up to an average of **93.5%**. 
+>[!NOTE]
+>Note, that the standalone model still only reaches **88.2%** accuracy, it is just due to the threshold tuning which is made at prediction time that it is able to reach a final accuracy of **93.7%**
 
-V4 however, is a sophisticated remake of V3, with the same hyperparameters but far more features, including engineered ones and has a staggering **88.2%** accuracy, and is also two thirds the size of V3, coming in at **214MB**.
 
 ## Project Structure 
 
@@ -38,11 +40,13 @@ The project structure is organized in a main folder named  `tennis_prediction`, 
 
  │   ├── decision_tree **(File created by tree.py)**
 
- │   ├── featureImp.py **(Graphing of most determinisitic features)**
+ │   ├── featureImp.py **(Graphing of most deterministic features)**
 
  │   ├── matrix.py **(Creates a confusion matrix to visually show accuracy**)
 
  │   ├── tree.py **(Creates and visualizes all branches and notes of the random forest classifier)**
+
+ │   ├── threshold.py **(A second version of the threshold script which also shows statistical analysis as well as a command line confusion matrix)**
 
  ├── 📂 data
 
@@ -58,11 +62,7 @@ The project structure is organized in a main folder named  `tennis_prediction`, 
 
  ├── 📂 results
 
- │   ├── small_tennis_model.pkl **(Small Trained model - *~310MB*)**
-
- │   ├── s_tennis_model.pkl **(Initial Trained model - *~662MB*)**
-
- │   ├── final_tennis_model.pkl **(Current Trained model - *~214MB*)**
+ │   ├── final_tennis_model.pkl **(Final Trained model - *~214MB*)**
 
  ├── main.py **(Main execution script)**
 
@@ -76,6 +76,8 @@ The project structure is organized in a main folder named  `tennis_prediction`, 
 
  ├── preprocess.py **(Processes raw data into AI-compatible format)**
 
+ ├── threshold.py **(Tunes the threshold for the model to use and dump it alongside the model)**
+
  ├── settings.txt **(Configuration file - Required for all scripts)**
 
 ## Installation and Setup
@@ -84,7 +86,7 @@ The project structure is organized in a main folder named  `tennis_prediction`, 
 Ensure that you have **Python 3.x** installed, along with the following dependencies:
 `pip install -r requirements.txt`
 >[!IMPORTANT]
->This will install pandas, numpy, joblib, scikit-learn, seaborn, matplotlib, graphviz and scikit-optimize, all except for *scikit-optimize* are requirements for the program to run.
+>This will install pandas, numpy, joblib, scikit-learn, seaborn, matplotlib, graphviz and scikit-optimize, all except for *scikit-optimize* are requirements for the program to run. Seaborn, matplotlib and graphviz are not needed for predictions, but are requirements if you want to run the scripts found in the analysis folder.
 
 ### Running the Application
 
@@ -103,21 +105,38 @@ All of the python scripts rely on the existence of `settings.txt`. If this file 
 ### `main.py`
 This script runs the entire tennis match prediction program and requires user input, Upon execution:
 1. The user must input a **starting year** and an **ending year**.
-  - The dataset contains data from 1985 to 2024.
-  - Invalid values outside of this range will not be accepted.
-  - Users can enter **"all"** as the starting year **ONLY** to automatically select the full range *(1985-2024)*. In this case, the ending year input is ignored.
+
+    - The dataset contains data from 1985 to 2024.
+    - On the very first run of the program, use "all" as it will create the file in which data for all years is stored and used
+    - Invalid values outside of this range will not be accepted.
+    - Users can enter **"all"** as the starting year **ONLY** to automatically select the full range *(1985-2024)*. In this case, the ending year input is ignored.
 2. The user is given the option to **retrain the model** on the chosen dataset.
-  - Training takes approximately **2.5 minutes** with default setting, but will take longer if hyperparameters are increased.
+
+    - Training takes approximately **2.5 minutes** with default setting, but will take longer if hyperparameters are increased.
 >[!WARNING]
->Retraining is only recommended when using the entire dataset. Using smaller datasets may lead to a decreases in accuracy of the model or unrecognized names.
-3. The user must enter the names of **two tennis players**.
-  - Names must be written in **full**, using the format **"First Last"** (e.g., "Jannik Sinner" and "Carlos Alcaraz").
-  - Note that the input is case-sensitive and **requires capitalization in the first and last name**
-4. The program will output a **predicted winner**.
-  - When retrained, predictions may vary even for the same matchups due to the AI model not running on a set random state.
+>Retraining is only recommended when using the entire dataset. Using smaller datasets may lead to a decreases in accuracy of the model or unrecognized player names.
+
+3. The user is given the option to **calibrate**, **not calibrate** the threshold or **input a custom threshold**. 
+
+    - If calibration is selected, `threshold.py` will run and automatically find the best threshold for predictive accuracy.
+    - If no calibration is selected, the model will move on to prediction using the stated threshold in the message.
+    - If custom calibration is selected, the user will be prompted with filling in a number for the threshold.
+
+>[!WARNING]
+>It is always recommended to calibrate automatically on a random state of None (Which is the model default).
+
+4. The user must enter the names of **two tennis players**.
+    - Names must be written in **full**, using the format **"First Last"** (e.g., "Jannik Sinner" and "Carlos Alcaraz").
+    - Note that the input is case-sensitive and **requires capitalization in the first and last name**, this is to be fixed in future versions. If you are unsure of player spellings, `player_id_mapping.csv` will have all player names available. *(Search using Ctrl + f)*
+
+5. The program will output a **predicted winner**.
+    - When retrained, predictions may vary even for the same matchups due to the AI model not running on a set random state.
 
 ### `combine.py`
 Responsible for adding ATP tournament game datasets into a collection by year stored in `data/group` as `atp_matches_year_year.csv`. If the two years are the same, this file will not be created.
+
+### `preprocess.py`
+Processes raw match data for use by the AI model. It reduces the dataset by keeping only essential columns and merges the original table (split by winners and losers) into a single format, making each one match with their respective data standalone.
 
 ### `mapping.py`
 Adds every player ID and name into the `player_id_mapping.csv` file, the file currently contains **4178** players.
@@ -128,10 +147,10 @@ Adds every player ID and name into the `player_id_mapping.csv` file, the file cu
 Defines and trains the AI model. Users can tweak hyperparameters for different use cases. The trained model is saved as `small_tennis_model.pkl` and will print an accuracy estimation up to four decimal places upon completion.
 
 >[!INFO]
->It is not reccomended to tweak hyperparameters without changing the name of the model as it will overwrite the current version
+>It is not recommended to tweak hyperparameters without changing the name of the model as it will overwrite the current version.
 
-### `preprocess.py`
-Processes raw match data for use by the AI model. It reduces the dataset by keeping only essential columns and merges the original table (split by winners and losers) into a single format, making each one match with their respective data standalone.
+### `threshold.py`
+Takes the currently saved model and checks for the optimal predictive threshold between 0 and 1 and selects the threshold which maximizes predictive accuracy and resaves the model with the new optimal threshold.
 
 ### `predict.py`
 Handles match outcome prediction based on preprocessed data. **This script does not run via** `python predict.py` **but is instead called through** `main.py`. It strictly relies on data from `preprocessed/`, any modifications to the `DataFrame` dataset will break the prediction function. The script print the predicted winner for a tennis match between two selected players. 

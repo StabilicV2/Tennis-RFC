@@ -10,14 +10,14 @@ y = df["winner"]
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
 param_dist = {
-    'n_estimators': randint(100, 300),   
-    'max_depth': [10, 20],           
+    'n_estimators': randint(100, 500),   
+    'max_depth': randint(10, 20),           
     'min_samples_split': randint(2, 11),     
     'min_samples_leaf': randint(1, 5),   
     'max_features': ['sqrt', 'log2']
 }
 
-grid = RandomizedSearchCV(RandomForestClassifier(), param_dist, cv=5, scoring='accuracy', n_jobs=8, verbose=2, random_state=42)
+grid = RandomizedSearchCV(RandomForestClassifier(), param_dist, cv=2, scoring='accuracy', n_jobs=8, verbose=2, random_state=42)
 grid.fit(X_train, y_train)
 
 best_model = grid.best_estimator_

@@ -7,7 +7,7 @@ from sklearn.ensemble import RandomForestClassifier
 import joblib
 
 model_path = "../results/final_tennis_model.pkl"
-model = joblib.load(model_path)
+model, threshold = joblib.load(model_path)
 
 feature_names = list(model.feature_names_in_)
 

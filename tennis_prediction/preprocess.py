@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 
 USEFUL_COLUMNS = [
-    "surface", "tourney_level", "best_of", "winner_id",
+    "tourney_date", "surface", "tourney_level", "best_of", "winner_id",
     "loser_id", "winner_rank", "loser_rank", "winner_rank_points",
     "loser_rank_points", "w_ace", "w_df", "w_bpFaced",
     "l_ace", "l_df", "l_bpFaced", "w_bpSaved", "l_bpSaved",
@@ -14,6 +14,13 @@ USEFUL_COLUMNS = [
 
 def load(file_path):
   df = pd.read_csv(file_path, usecols=USEFUL_COLUMNS)
+  df["date"] = pd.to_datetime(df["tourney_date"].astype(str), format="%Y%m%d")
+
+  df["match_id"] = df.apply(
+    lambda x: "_".join(sorted([str(x["winner_id"]), str(x["loser_id"])])) + "_" + str(x["tourney_date"]),
+    axis=1
+  )
+
   df = df.dropna(subset=["winner_rank", "loser_rank"])
   df = pd.get_dummies(df, columns=["surface", "tourney_level", "best_of"])
   return df
@@ -52,6 +59,10 @@ def transform(df):
   df_winner["winner"] = 1
   df_loser["winner"] = 0
 
+  shared_cols = ["match_id", "date"]
+  df_winner[shared_cols] = df[shared_cols]
+  df_loser[shared_cols] = df[shared_cols]
+
   df_final = pd.concat([df_winner, df_loser], ignore_index=True)
 
   #! Engineered features
@@ -87,9 +98,44 @@ def transform(df):
       df_final["opponent_bpFaced"] / df_final["opponent_SvGms"]
   )
 
+  #? Symmetric pair key (H2H)
+  df_final["pair_key"] = df_final.apply(
+    lambda x: "_".join(sorted([str(x["player_id"]), str(x["opponent_id"])])), axis=1
+  )
+
   df_final = df_final.replace([np.inf, -np.inf], np.nan).fillna(0)
 
+  df_final = add_h2h(df_final)
+
   return df_final
+
+def add_h2h(df):
+  df = df.sort_values("date")
+  h2h_matches, h2h_winrates = [], []
+  history = {}
+
+  for _, row in df.iterrows():
+    key = row["pair_key"]
+    player = row["player_id"]
+    date = row["date"]
+
+    if key not in history:
+      history[key] = []
+
+    #> Previous matchups only
+    past_matches = [m for m in history[key] if m["date"] < date]
+    total = len(past_matches)
+    wins = sum(1 for m in past_matches if m["winner_id"] == player)
+
+    h2h_matches.append(total)
+    h2h_winrates.append(wins / total if total > 0 else 0)
+
+    #> Add to history
+    history[key].append({"date": date, "winner_id": player if row["winner"] == 1 else row["opponent_id"]})
+
+  df["h2h_prev_matches"] = h2h_matches
+  df["h2h_winrate_vs_opp"] = h2h_winrates
+  return df
 
 def process():
   with open("settings.txt", "r") as file:
@@ -101,6 +147,8 @@ def process():
   print(b)
   if a == b:
     FILE_PATH = f"data/atp/atp_matches_{a}.csv"
+  elif a == str(1985) and b == str(2024):
+    FILE_PATH = f"data/atp/groups/atp_matches_all.csv"
   else:
     FILE_PATH = f"data/atp/groups/atp_matches_{a}_{b}.csv"
     
@@ -110,6 +158,10 @@ def process():
   if a == b:
     df_final.to_csv(f"data/preprocessed/preprocessed_{a}.csv", index=False)
     print(f"Data Preprocessing Complete, saved as 'preprocessed_{a}.csv' in 'data/preprocessed' folder")
+    print(df_final.head())
+  elif a == str(1985) and b == str(2024):
+    df_final.to_csv(f"data/preprocessed/preprocessed_all.csv", index=False)
+    print(f"Data Preprocessing Complete, saved as 'preprocessed_all.csv' in 'data/preprocessed' folder")
     print(df_final.head())
   else:
     df_final.to_csv(f"data/preprocessed/preprocessed_{a}_{b}.csv", index=False)
