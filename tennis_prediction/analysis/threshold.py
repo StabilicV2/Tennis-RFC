@@ -11,7 +11,7 @@ from sklearn.metrics import (
 
 def findThreshold():
     df = pd.read_csv("data/preprocessed/preprocessed_all.csv")
-    X = df.drop(columns=["player_id", "opponent_id", "winner"])
+    X = df.drop(columns=["player_id", "opponent_id", "winner", "tourney_date", "date"])
     y = df["winner"]
 
     X_train, X_test, y_train, y_test = train_test_split(
@@ -23,7 +23,7 @@ def findThreshold():
 
     probs = model.predict_proba(X_test)[:, 1]
 
-    thresholds = np.linspace(0, 1, 200)
+    thresholds = np.linspace(0, 1, 1000)
     accuracies = []
 
     for t in thresholds:

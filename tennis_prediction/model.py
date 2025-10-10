@@ -20,12 +20,12 @@ def train():
   else:
     df = pd.read_csv(f"data/preprocessed/preprocessed_{a}_{b}.csv")
 
-  X = df.drop(columns=["player_id", "opponent_id", "winner", "tourney_date", "date"])
+  X = df.drop(columns=["player_id", "opponent_id", "winner"])
   y = df["winner"]
 
   X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=None)
 
-  model = RandomForestClassifier(n_estimators=186, random_state=None, max_depth=20, min_samples_split=5, min_samples_leaf=1, max_features="log2", class_weight="balanced")
+  model = RandomForestClassifier(n_estimators=200, random_state=None, max_depth=20, min_samples_split=5, min_samples_leaf=4, max_features="sqrt", class_weight="balanced")
   model.fit(X_train, y_train)
   y_pred = model.predict(X_test)
 
