@@ -88,7 +88,7 @@ def predict(player1_name, player2_name):
     "opponent_rank": player2_stats["player_rank"],
     "opponent_rank_points": player2_stats["player_rank_points"],
     
-    "surface_Carpet": player1_stats.get["surface_Carpet"],
+    "surface_Carpet": player1_stats["surface_Carpet"],
     "surface_Clay": player1_stats["surface_Clay"],
     "surface_Grass": player1_stats["surface_Grass"],
     "surface_Hard": player1_stats["surface_Hard"],
@@ -137,6 +137,9 @@ def predict(player1_name, player2_name):
   match_data["bp_pressure_diff"] = (
     (match_data["player_bpFaced"] / match_data["player_SvGms"]) -
     (match_data["opponent_bpFaced"] / match_data["opponent_SvGms"]))
+  
+  match_data["h2h_prev_matches"] = h2h_matches
+  match_data["h2h_winrate_vs_opp"] = h2h_winrate
 
   expected_order = list(model.feature_names_in_)
   

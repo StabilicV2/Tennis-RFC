@@ -20,7 +20,10 @@ def train():
   else:
     df = pd.read_csv(f"data/preprocessed/preprocessed_{a}_{b}.csv")
 
-  X = df.drop(columns=["player_id", "opponent_id", "winner", "tourney_date", "date"])
+  if all(col in df.columns for col in ["tourney_date", "date"]):
+    X = df.drop(columns=["player_id", "opponent_id", "winner", "tourney_date", "date", "match_id", "pair_key"])
+  else:
+    X = df.drop(columns=["player_id", "opponent_id", "winner", "match_id", "pair_key"])
   y = df["winner"]
 
   X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=None)
