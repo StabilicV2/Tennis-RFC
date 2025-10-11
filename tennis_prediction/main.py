@@ -78,6 +78,7 @@ def main():
   if thresh.lower() == "y":
     import threshold
     threshold.findThreshold(None)
+    threshold.findThreshold(None)
     acc = float(lines[2].strip())
     print(f"New accuracy is {acc:.4f}")
   if thresh.lower() == "n":
