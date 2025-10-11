@@ -27,6 +27,7 @@ def findThreshold():
     probs = model.predict_proba(X_test)[:, 1]
 
     thresholds = np.linspace(0, 1, 1000)
+    thresholds = np.linspace(0, 1, 1000)
     accuracies = []
 
     for t in thresholds:
