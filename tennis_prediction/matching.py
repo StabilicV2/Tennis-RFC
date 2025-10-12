@@ -1,5 +1,4 @@
 from difflib import get_close_matches
-import pandas as pd
 
 def find_player_id(name, mapping_df, threshold=0.7):
 

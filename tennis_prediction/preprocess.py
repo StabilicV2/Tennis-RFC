@@ -23,6 +23,10 @@ def load(file_path):
 
   df = df.dropna(subset=["winner_rank", "loser_rank"])
   df = pd.get_dummies(df, columns=["surface", "tourney_level", "best_of"])
+  df["pair_key"] = df.apply(
+    lambda x: "_".join(sorted([str(int(x["winner_id"])), str(int(x["loser_id"]))])),
+    axis=1
+  )
   return df
 
 def transform(df):

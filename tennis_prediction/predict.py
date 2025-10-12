@@ -31,8 +31,7 @@ def get_dataset():
 
     return df
 
-def get_latest_stats(df, player_name):
-  player_id = get_player_id(player_name)
+def get_latest_stats(df, player_id):
   if player_id is None:
     return None
   
@@ -65,16 +64,12 @@ def predict(player1_name, player2_name):
   player2_id, player2_name = find_player_id(player2_name, pm)
 
   df = get_dataset()
-  player1_stats = get_latest_stats(df, player1_name)
-  player2_stats = get_latest_stats(df, player2_name)
+  player1_stats = get_latest_stats(df, player1_id)
+  player2_stats = get_latest_stats(df, player2_id)
 
   if player1_stats is None or player2_stats is None:
     print("Error: Player data not found.")
     return None
-  
-  player1_id = player1_stats["player_id"]
-  player2_id = player2_stats["player_id"]
-
 
   #? Compute H2H stats
   h2h_matches, h2h_winrate = compute_h2h(df, player1_id, player2_id)
