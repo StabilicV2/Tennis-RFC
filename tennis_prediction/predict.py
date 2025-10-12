@@ -2,6 +2,7 @@
 import pandas as pd
 import joblib
 import numpy as np
+from matching import find_player_id
 
 pm = pd.read_csv("data/player_mapping.csv")
 model, threshold = joblib.load("results/final_tennis_model.pkl")
@@ -48,7 +49,7 @@ def compute_h2h(df, player1_id, player2_id):
 
   total = len(past_matches)
   if total == 0:
-    return 0, 0.0
+    return 0, 0.5
   
   #> Number of times player 1 won
   player1_wins = len(past_matches[
@@ -59,6 +60,10 @@ def compute_h2h(df, player1_id, player2_id):
   return total, winrate
 
 def predict(player1_name, player2_name):
+  
+  player1_id, player1_name = find_player_id(player1_name, pm)
+  player2_id, player2_name = find_player_id(player2_name, pm)
+
   df = get_dataset()
   player1_stats = get_latest_stats(df, player1_name)
   player2_stats = get_latest_stats(df, player2_name)

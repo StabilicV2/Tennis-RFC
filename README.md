@@ -74,6 +74,8 @@ The project structure is organized in a main folder named  `tennis_prediction`, 
 
  ├── predict.py **(Runs predictions using the trained model - Only callable from main.py)**
 
+ ├── matching.py **(Takes player name inputs and finds close matches to mispellings or formats for prediction inputs - Only callable from main.py)**
+
  ├── preprocess.py **(Processes raw data into AI-compatible format)**
 
  ├── threshold.py **(Tunes the threshold for the model to use and dump it alongside the model)**
@@ -125,9 +127,9 @@ This script runs the entire tennis match prediction program and requires user in
 >[!WARNING]
 >It is always recommended to calibrate automatically on a random state of None (Which is the model default).
 
-4. The user must enter the names of **two tennis players**.
-    - Names must be written in **full**, using the format **"First Last"** (e.g., "Jannik Sinner" and "Carlos Alcaraz").
-    - Note that the input is case-sensitive and **requires capitalization in the first and last name**, this is to be fixed in future versions. If you are unsure of player spellings, `player_id_mapping.csv` will have all player names available. *(Search using Ctrl + f)*
+4. The user must enter the names of **two male tennis players** who have participated in ATP Tour before.
+    - Names no longer need to be completely precise and accurate as `matching.py` handles improper cases.
+
 
 5. The program will output a **predicted winner**.
     - When retrained, predictions may vary even for the same matchups due to the AI model not running on a set random state.
@@ -152,10 +154,13 @@ Defines and trains the AI model. Users can tweak hyperparameters for different u
 ### `threshold.py`
 Takes the currently saved model and checks for the optimal predictive threshold between 0 and 1 and selects the threshold which maximizes predictive accuracy and resaves the model with the new optimal threshold.
 
+### `matching.py`
+Takes the name inputs of the two selected players and runs them through a system which checks whether their names exist in the database, and if not, attempts to find potential matches.
+
 ### `predict.py`
 Handles match outcome prediction based on preprocessed data. **This script does not run via** `python predict.py` **but is instead called through** `main.py`. It strictly relies on data from `preprocessed/`, any modifications to the `DataFrame` dataset will break the prediction function. The script print the predicted winner for a tennis match between two selected players. 
 >[!NOTE]
->**Player names must be written in full and are case sensitive.**
+>**Player names no longer need to be written in full and don't require proper capitalization**
 
 ## Data Details
 - The `data/atp` folder contains CSV files for each year's ATP matches.
